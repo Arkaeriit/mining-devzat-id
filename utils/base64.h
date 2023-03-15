@@ -17,7 +17,7 @@ Encodes ASCCI string into base64 format string
 @param plain ASCII string to be encoded
 @return encoded base64 format string
 ***********************************************/
-char* base64_encode(char* plain);
+char* base64_encode(char* plain, size_t size);
 
 
 /***********************************************
