@@ -15,8 +15,7 @@
 #define NUMBER_OF_KEYS_SIZE 1
 #define NONE                "none"
 #define KEY_TYPE            "ssh-ed25519"
-/*#define COMMENT             "Made with mining-devzat-key © Arkaeriit"*/
-#define COMMENT             "mbouillot@mbo-laptop"
+#define COMMENT             "Made with mining-devzat-key © Arkaeriit"
 #define ED25519_SIZE        32
 #define HEADER_MARK         "-----BEGIN OPENSSH PRIVATE KEY-----"
 #define FOOTER_MARK         "-----END OPENSSH PRIVATE KEY-----"
@@ -134,7 +133,7 @@ char* openssh_format_key(const uint8_t* privkey, const uint8_t* pubkey) {
 		putchar(bin_data[i]);
 	}
 #endif
-	char* base64_data = base64_encode((char*) bin_data, bin_size);
+	char* base64_data = base64_encode(bin_data, bin_size);
 	char* ret = malloc(strlen(HEADER_MARK) + strlen(FOOTER_MARK) + strlen(base64_data) + 4);
 	strcpy(ret, HEADER_MARK);
 	strcat(ret, "\n");
