@@ -68,7 +68,7 @@ static size_t write_header(uint8_t* s) {
 }
 
 // Write the public key content
-static size_t write_public_key_data(uint8_t* s, const uint8_t* pubkey) {
+size_t openssh_format_pubkey(uint8_t* s, const uint8_t* pubkey) {
 	size_t ret = write_string(s, KEY_TYPE);
 	ret += write_size_data(s == NULL ? s : s + ret, ED25519_SIZE, pubkey);
 	return ret;
@@ -76,9 +76,9 @@ static size_t write_public_key_data(uint8_t* s, const uint8_t* pubkey) {
 
 // Write the public key block
 static size_t write_pubkey_block(uint8_t* s, const uint8_t* pubkey) {
-	size_t data_size = write_public_key_data(NULL, pubkey);
+	size_t data_size = openssh_format_pubkey(NULL, pubkey);
 	size_t ret = write_le_number(s, (uint32_t) data_size);
-	ret += write_public_key_data(s == NULL ? s : s + ret, pubkey);
+	ret += openssh_format_pubkey(s == NULL ? s : s + ret, pubkey);
 	return ret;
 }
 
@@ -96,7 +96,7 @@ static size_t write_privkey_block(uint8_t* s, const uint8_t* privkey, const uint
 		/*size_t ret = write_data(s, sizeof(uint64_t), (const uint8_t*) KEY_TYPE); // Dummy 64 bit value. Could be a checksum but is not needed*/
 		const uint8_t sum[] = {0x7e, 0xd0, 0x47, 0x27, 0x7e, 0xd0, 0x47, 0x27};
 		size_t ret = write_data(s, sizeof(uint64_t), sum); // Dummy 64 bit value. Could be a checksum but is not needed
-		ret += write_public_key_data(s == NULL ? s : s + ret, pubkey);
+		ret += openssh_format_pubkey(s == NULL ? s : s + ret, pubkey);
 		ret += write_private_key_data(s == NULL ? s : s + ret, privkey, pubkey);
 		ret += write_string(s == NULL ? s : s + ret, COMMENT);
 		// Padding to 8 bytes
