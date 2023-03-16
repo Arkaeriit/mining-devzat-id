@@ -34,7 +34,7 @@ int main(void) {
 	/*printf("%s\n", keyfile);*/
 	/*free(keyfile);*/
 #endif
-	char* keyfile = devzat_mining_mono("000");
+	char* keyfile = devzat_mining_multi("cafe", 16);
 	printf("%s\n", keyfile);
 	free(keyfile);
 	return 0;

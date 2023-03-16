@@ -1,6 +1,7 @@
 #include "openssh_formatter.h"
 #include "curve25519.h"
 #include <stdbool.h>
+#include <threads.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -103,6 +104,12 @@ static void key_mining_worker(worker_arguments* args) {
 	free(privkey);
 }
 
+// Wrapper for key_mining_worker which is of type thrd_start_t
+static int key_mining_worker_wrap(void* args) {
+	key_mining_worker((worker_arguments*) args);
+	return 0;
+}
+
 // Generate the content of an openssh key file whose public key matches as a
 // Devzat hash the reference.
 // The data is malloced
@@ -112,8 +119,8 @@ char* devzat_mining_mono(const char* reference) {
 		fprintf(stderr, "Error, reference should be a valid hex number.\n");
 		return NULL;
 	}
-
 	srand(time(NULL));
+
 	worker_arguments args = {
 		.reference = reference,
 		.finished = false,
@@ -125,5 +132,51 @@ char* devzat_mining_mono(const char* reference) {
 	ed25519_public_key(pubkey, args.working_privkey);
 
 	return openssh_format_key(args.working_privkey, pubkey);
+}
+
+#define ever ;;
+
+// Same as devzat_mining_mono but multithreaded
+char* devzat_mining_multi(const char* reference, unsigned int thread_number) {
+	if (!valid_hex(reference)) {
+		fprintf(stderr, "Error, reference should be a valid hex number.\n");
+		return NULL;
+	}
+	srand(time(NULL));
+	char* ret = NULL;
+
+	// Making the threads
+	thrd_t threads[thread_number];
+	worker_arguments** args_list = malloc(sizeof(worker_arguments*) * thread_number);
+	for (unsigned int i=0; i<thread_number; i++) {
+		args_list[i] = malloc(sizeof(worker_arguments));
+		args_list[i]->reference = reference;
+		args_list[i]->finished = false;
+		args_list[i]->stop_force = false;
+
+		thrd_create(&threads[i], key_mining_worker_wrap, args_list[i]);
+	}
+
+	// Waiting for one thread to finish
+	for(ever) {
+		for (unsigned int i=0; i<thread_number; i++) {
+			if (args_list[i]->finished) {
+				uint8_t pubkey[CURVE_25519_PUBLIC_KEY_SIZE];
+				ed25519_public_key(pubkey, args_list[i]->working_privkey);
+				ret = openssh_format_key(args_list[i]->working_privkey, pubkey);
+				goto end_loop;
+			}
+		}
+	}
+end_loop:
+	// Closing all threads
+	for (unsigned int i=0; i<thread_number; i++) {
+		args_list[i]->stop_force = true;
+		thrd_join(threads[i], NULL);
+		free(args_list[i]);
+	}
+	free(args_list);
+
+	return ret;
 }
 
