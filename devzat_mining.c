@@ -2,6 +2,7 @@
 #include "curve25519.h"
 #include <stdbool.h>
 #include <threads.h>
+#include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -82,7 +83,7 @@ static void increase_privkey(uint8_t* privkey) {
 
 typedef struct {
 	const char* reference;
-	bool finished;
+	volatile bool finished;
 	volatile bool stop_force;
 	uint8_t working_privkey[CURVE_25519_PRIVATE_KEY_SIZE];
 } worker_arguments;
@@ -167,6 +168,7 @@ char* devzat_mining_multi(const char* reference, unsigned int thread_number) {
 				goto end_loop;
 			}
 		}
+		sleep(1);
 	}
 end_loop:
 	// Closing all threads
