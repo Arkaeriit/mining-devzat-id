@@ -1,42 +1,63 @@
-#include <stdlib.h>
-#include <stdio.h>
 #include "devzat_mining.h"
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
 
-#if 0
-const uint8_t an_key[32] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32};
-
-void put_key_bin(const uint8_t key[32]) {
-	for (int i=0; i<32; i++) {
-		putchar(key[i]);
-	}
+static void help(const char* prg_name) {
+	printf("mining-devzat-id, a tool to get yourself a shiny Devzat ID.\n");
+	printf("This tool generate an openSSH ed25519 private key that will make a\n"
+	       "cool Devzat id.\n\n");
+	printf("Usage:\n");
+	printf("    %s desired-id [thread-number [output-file]]\n", prg_name);
+	printf("  desired-id: start of the resulting id. If desired-id is 000, you\n"
+	       "              will get an id starting with 000 such as 000c6d33...\n");
+	printf("  thread-number: number of threads used to compute the id.\n"
+	       "                 Default to 1.\n");
+	printf("  output-file: path to the file where the generated key will be written.\n"
+	       "               Default to stdout.\n");
 }
-#endif
 
-int main(void) {
-#if 0
-	uint8_t pub[32];
-	ed25519_public_key(pub, an_key);
-	/*put_key_bin(an_key);*/
-	uint8_t test[1000];
-	size_t size = openssh_format_pubkey(test, pub);
-
-	cf_sha256_context ctx;
-	cf_sha256_init(&ctx);
-	cf_sha256_update(&ctx, test, size);
-	uint8_t hash[CF_SHA256_HASHSZ];
-	cf_sha256_digest_final(&ctx, hash);
-	for (int i=0; i<CF_SHA256_HASHSZ; i++) {
-		printf("%x", hash[i]);
+int main(int argc, char** argv) {
+	if (argc <= 1) {
+		fprintf(stderr, "Error, invalid arguments.\nRun `%s --help` for more info.\n", argv[0]);
+		return 1;
 	}
-	printf("\n");
-	/*put_key_bin(pub);*/
-	/*char* keyfile = openssh_format_key(an_key, pub);*/
-	/*printf("%s\n", keyfile);*/
-	/*free(keyfile);*/
-#endif
-	char* keyfile = devzat_mining_multi("cafe", 16);
-	printf("%s\n", keyfile);
+	if (!strcmp(argv[1], "-h") || !strcmp(argv[1], "help") || !strcmp(argv[1], "-help") || !strcmp(argv[1], "--help")) {
+		help(argv[0]);
+		return 0;
+	}
+
+	char* keyfile;
+	if (argc >= 3) {
+		int thread_number = atoi(argv[2]);
+		if (thread_number < 1) {
+			fprintf(stderr, "Error, thread number should be a strictly positive number.\n");
+			return 2;
+		}
+		keyfile = devzat_mining_multi(argv[1], thread_number);
+	} else {
+		keyfile = devzat_mining_mono(argv[1]);
+	}
+	if (keyfile == NULL) {
+		return 4;
+	}
+
+	FILE* out = stdout;
+	if (argc >= 4) {
+		out = fopen(argv[3], "w");
+		if (out == NULL) {
+			fprintf(stderr, "Error, unable to open output file.\n");
+			free(keyfile);
+			return 8;
+		}
+	}
+
+	fprintf(out, "%s", keyfile);
+	if (out != stdout) {
+		fclose(out);
+	}
 	free(keyfile);
+
 	return 0;
 }
 
