@@ -2,7 +2,7 @@
 
 ```
 mining-devzat-id, a tool to get yourself a shiny Devzat ID.
-This tool generate an openSSH ed25519 private key that will make a
+This tool generates an openSSH ed25519 private key that will make a
 cool Devzat id.
 
 Usage:

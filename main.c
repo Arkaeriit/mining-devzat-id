@@ -5,7 +5,7 @@
 
 static void help(const char* prg_name) {
 	printf("mining-devzat-id, a tool to get yourself a shiny Devzat ID.\n");
-	printf("This tool generate an openSSH ed25519 private key that will make a\n"
+	printf("This tool generates an openSSH ed25519 private key that will make a\n"
 	       "cool Devzat id.\n\n");
 	printf("Usage:\n");
 	printf("    %s desired-id [thread-number [output-file]]\n", prg_name);
