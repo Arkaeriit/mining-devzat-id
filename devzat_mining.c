@@ -46,6 +46,18 @@ static bool compare_hex_and_array(const uint8_t* array, const char* str) {
 	return true;
 }
 
+// Compile with the CFLAGS=-DQUIET_MATCHING to suppress printing the ID when found
+#ifndef QUIET_MATCHING
+static char* format_hash(const uint8_t* hash) {
+	char* ret = malloc(CF_SHA256_HASHSZ * 2 + 1);
+	ret[0] = 0;
+	for (int i=0; i<CF_SHA256_HASHSZ; i++) {
+		snprintf(ret + (2 * i), 3, "%02x", hash[i]);
+	}
+	return ret;
+}
+#endif
+
 // Compare the few first bytes of the hash of the public key (Devzat's method)
 // to the given reference string and see if they match
 static bool is_key_hash_matching(const uint8_t* privkey, const char* reference) {
@@ -61,7 +73,15 @@ static bool is_key_hash_matching(const uint8_t* privkey, const char* reference) 
 	uint8_t hash[CF_SHA256_HASHSZ];
 	cf_sha256_digest_final(&ctx, hash);
 
-	return compare_hex_and_array(hash, reference);
+	bool matching = compare_hex_and_array(hash, reference);
+#ifndef QUIET_MATCHING
+	if (matching) {
+		char* hash_str = format_hash(hash);
+		fprintf(stderr, "Found key giving the ID %s.\n", hash_str);
+		free(hash_str);
+	}
+#endif
+	return matching;
 }
 
 // Generate a new random private key
