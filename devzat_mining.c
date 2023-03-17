@@ -1,7 +1,7 @@
 #include "openssh_formatter.h"
 #include "curve25519.h"
 #include <stdbool.h>
-#include <threads.h>
+#include "threads.h"
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
