@@ -8,7 +8,15 @@ C_HEAD := ed25519/curve25519.h ed25519/monocypher.h sha2/sha2.h utils/bitops.h u
 C_OBJS := $(C_SRC:%.c=%.o)
 
 OS := $(shell uname -s)
+C11_TREAD := true
 ifeq ($(OS),Darwin)
+	C11_TREAD := false
+endif
+ifeq ($(OS),FreeBSD)
+	C11_TREAD := false
+endif
+
+ifeq ($(C11_TREAD),false)
 	CFLAGS += -I./c11_threads_compatibility -Wno-cast-function-type
 	C_HEAD += c11_threads_compatibility/threads.h
 endif
