@@ -111,6 +111,29 @@ static int key_mining_worker_wrap(void* args) {
 	return 0;
 }
 
+// Try to start the C PRNG with a true random seed. If not available, default
+// to using the time
+static void seed_rng() {
+	FILE* f;
+	f = fopen("/dev/urandom", "r");
+	if (f == NULL) {
+		f = fopen("/dev/random", "r");
+	}
+	if (f == NULL) {
+		fprintf(stderr, "Warning, unable to find a true random source. The generated key will be easy to crack.\n");
+		srand(time(NULL));
+		return;
+	}
+	unsigned int seed;
+	if (fread(&seed, sizeof(unsigned int), 1, f) == 1) {
+		srand(seed);
+	} else {
+		fprintf(stderr, "Warning, unable to read from the true random source. The generated key will be easy to crack.\n");
+		srand(time(NULL));
+	}
+	fclose(f);
+}
+
 // Generate the content of an openssh key file whose public key matches as a
 // Devzat hash the reference.
 // The data is malloced
@@ -120,7 +143,7 @@ char* devzat_mining_mono(const char* reference) {
 		fprintf(stderr, "Error, reference should be a valid hex number.\n");
 		return NULL;
 	}
-	srand(time(NULL));
+	seed_rng();
 
 	worker_arguments args = {
 		.reference = reference,
@@ -143,7 +166,7 @@ char* devzat_mining_multi(const char* reference, unsigned int thread_number) {
 		fprintf(stderr, "Error, reference should be a valid hex number.\n");
 		return NULL;
 	}
-	srand(time(NULL));
+	seed_rng();
 	char* ret = NULL;
 
 	// Making the threads
