@@ -7,6 +7,7 @@ C_SRC := main.c ed25519/monocypher.c sha2/sha256.c sha2/sha512.c utils/blockwise
 C_HEAD := ed25519/curve25519.h ed25519/monocypher.h sha2/sha2.h utils/bitops.h utils/blockwise.h utils/chash.h utils/handy.h utils/tassert.h utils/zero.h utils/base64.h openssh_formatter.h devzat_mining.h
 C_OBJS := $(C_SRC:%.c=%.o)
 
+OS := $(shell uname -s)
 ifeq ($(OS),Darwin)
 	CFLAGS += -I./c11_threads_compatibility -Wno-cast-function-type
 	C_HEAD += c11_threads_compatibility/threads.h
