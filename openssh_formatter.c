@@ -90,24 +90,25 @@ static size_t write_private_key_data(uint8_t* s, const uint8_t* privkey, const u
 	return write_size_data(s, ED25519_SIZE * 2, concat_keys);
 }
 
+// Write the private key content without its leading size
+static size_t privkey_no_size(uint8_t* s, const uint8_t* privkey, const uint8_t* pubkey) {
+	/*size_t ret = write_data(s, sizeof(uint64_t), (const uint8_t*) KEY_TYPE); // Dummy 64 bit value. Could be a checksum but is not needed*/
+	const uint8_t sum[] = {0x7e, 0xd0, 0x47, 0x27, 0x7e, 0xd0, 0x47, 0x27};
+	size_t ret = write_data(s, sizeof(uint64_t), sum); // Dummy 64 bit value. Could be a checksum but is not needed
+	ret += openssh_format_pubkey(s == NULL ? s : s + ret, pubkey);
+	ret += write_private_key_data(s == NULL ? s : s + ret, privkey, pubkey);
+	ret += write_string(s == NULL ? s : s + ret, COMMENT);
+	// Padding to 8 bytes
+	uint8_t padding_value = 1;
+	while ((ret) % 8 != 0) {
+		ret += write_data(s == NULL ? s : s + ret, 1, &padding_value);
+		padding_value++;
+	}
+	return ret;
+}
+
 // Write the private key block
 static size_t write_privkey_block(uint8_t* s, const uint8_t* privkey, const uint8_t* pubkey) {
-	size_t privkey_no_size(uint8_t* s, const uint8_t* privkey, const uint8_t* pubkey) {
-		/*size_t ret = write_data(s, sizeof(uint64_t), (const uint8_t*) KEY_TYPE); // Dummy 64 bit value. Could be a checksum but is not needed*/
-		const uint8_t sum[] = {0x7e, 0xd0, 0x47, 0x27, 0x7e, 0xd0, 0x47, 0x27};
-		size_t ret = write_data(s, sizeof(uint64_t), sum); // Dummy 64 bit value. Could be a checksum but is not needed
-		ret += openssh_format_pubkey(s == NULL ? s : s + ret, pubkey);
-		ret += write_private_key_data(s == NULL ? s : s + ret, privkey, pubkey);
-		ret += write_string(s == NULL ? s : s + ret, COMMENT);
-		// Padding to 8 bytes
-		uint8_t padding_value = 1;
-		while ((ret) % 8 != 0) {
-			ret += write_data(s == NULL ? s : s + ret, 1, &padding_value);
-			padding_value++;
-		}
-		return ret;
-	}
-
 	size_t data_size = privkey_no_size(NULL, privkey, pubkey);
 	size_t ret = write_le_number(s, (uint32_t) data_size);
 	ret += privkey_no_size(s == NULL ? s : s + ret, privkey, pubkey);

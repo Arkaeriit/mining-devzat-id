@@ -1,5 +1,6 @@
 # Flags
-CFLAGS += -Wall -Wextra -Wfatal-errors -I./ed25519/ -I./sha2/ -I./utils/ -DCONFIG_MODULE_CRYPTO_CURVE25519_STACK -lpthread -O3
+CFLAGS += -Wall -Wextra -Wfatal-errors -I./ed25519/ -I./sha2/ -I./utils/ -DCONFIG_MODULE_CRYPTO_CURVE25519_STACK -O3
+LDFLAGS += -lpthread
 
 # Files lists
 C_SRC := main.c ed25519/monocypher.c sha2/sha256.c sha2/sha512.c utils/blockwise.c utils/chash.c utils/zero.c utils/base64.c openssh_formatter.c devzat_mining.c
@@ -15,7 +16,7 @@ DESTDIR ?= /usr/local
 	$(CC) -c $< $(CFLAGS) -o $@
 
 mining-devzat-id: $(C_OBJS)
-	$(CC) $(C_OBJS) $(CFLAGS) -o $@
+	$(CC) $(C_OBJS) $(CFLAGS) $(LDFLAGS) -o $@
 
 clean :
 	$(RM) mining-devzat-id
