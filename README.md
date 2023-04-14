@@ -15,3 +15,7 @@ Usage:
                Default to stdout.
 ```
 
+## Compilation with Cosmopolitan libc
+
+If you want to compile it with the Cosmopolitan libc to make a portable executable, do `COSMOPOLITAN=true make`.
+
