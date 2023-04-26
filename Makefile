@@ -1,6 +1,5 @@
 # Flags
 CFLAGS += -Wall -Wextra -Wfatal-errors -I./ed25519/ -I./sha2/ -I./utils/ -DCONFIG_MODULE_CRYPTO_CURVE25519_STACK -O3
-LDFLAGS += -lpthread
 
 # Files lists
 C_SRC := main.c ed25519/monocypher.c sha2/sha256.c sha2/sha512.c utils/blockwise.c utils/chash.c utils/zero.c utils/base64.c openssh_formatter.c devzat_mining.c
@@ -19,9 +18,12 @@ endif
 
 ifdef COSMOPOLITAN
 	C11_TREAD := false
-	CFLAGS += -g -Os -static -fno-pie -no-pie -nostdlib -nostdinc -gdwarf-4  -fno-omit-frame-pointer -pg -mnop-mcount -mno-tls-direct-seg-refs -Wl,--gc-sections -fuse-ld=bfd -Wl,--gc-sections -I./cosmopolitan  -Wl,-T,cosmopolitan/ape.lds -include cosmopolitan.h cosmopolitan/crt.o cosmopolitan/ape-no-modify-self.o cosmopolitan/cosmopolitan.a
+	CFLAGS += -g -Os -static -fno-pie -no-pie -nostdlib -nostdinc -gdwarf-4  -fno-omit-frame-pointer -pg -mnop-mcount -mno-tls-direct-seg-refs -Wl,--gc-sections -fuse-ld=bfd -Wl,--gc-sections -I./cosmopolitan  -Wl,-T,cosmopolitan/ape.lds
+	LDFLAGS += cosmopolitan/cosmopolitan.a cosmopolitan/ape-no-modify-self.o cosmopolitan/crt.o
 	TARGET := mining-devzat-id.com
 	C_HEAD += cosmopolitan/cosmopolitan.h
+else
+	LDFLAGS += -lpthread
 endif
 
 ifeq ($(C11_TREAD),false)
