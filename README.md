@@ -17,5 +17,5 @@ Usage:
 
 ## Compilation with Cosmopolitan libc
 
-If you want to compile it with the Cosmopolitan libc to make a portable executable, do `COSMOPOLITAN=true make`.
+If you want to compile it with the Cosmopolitan libc to make a portable executable, do `make mining-devzat-id.com`.
 
