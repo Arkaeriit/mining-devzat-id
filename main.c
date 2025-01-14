@@ -34,9 +34,9 @@ int main(int argc, char** argv) {
 			fprintf(stderr, "Error, thread number should be a strictly positive number.\n");
 			return 2;
 		}
-		keyfile = devzat_mining_multi(argv[1], thread_number);
+		keyfile = devzat_mining_multi(argv[1], thread_number, true);
 	} else {
-		keyfile = devzat_mining_mono(argv[1]);
+		keyfile = devzat_mining_mono(argv[1], true);
 	}
 	if (keyfile == NULL) {
 		return 4;

@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include "base64.h"
 #include <stdio.h>
 #include <time.h>
 #include "sha2.h"
@@ -60,13 +61,7 @@ static char* format_hash(const uint8_t* hash) {
 
 // Compare the few first bytes of the hash of the public key (Devzat's method)
 // to the given reference string and see if they match
-static bool is_key_hash_matching(const uint8_t* privkey, const char* reference) {
-	uint8_t pubkey[CURVE_25519_PUBLIC_KEY_SIZE];
-	ed25519_public_key(pubkey, privkey);
-	size_t formated_key_size = openssh_format_pubkey(NULL, pubkey);
-	uint8_t message[formated_key_size];
-	openssh_format_pubkey(message, pubkey);
-
+static bool is_key_hash_matching_for_devzat(const uint8_t* message, size_t formated_key_size, const char* reference) {
 	cf_sha256_context ctx;
 	cf_sha256_init(&ctx);
 	cf_sha256_update(&ctx, message, formated_key_size);
@@ -82,6 +77,25 @@ static bool is_key_hash_matching(const uint8_t* privkey, const char* reference) 
 	}
 #endif
 	return matching;
+}
+
+static bool is_public_key_matching(const char* message, size_t formated_key_size, const char* reference) {
+	unsigned char base64_data[b64e_size(formated_key_size)];
+	b64_encode(message, formated_key_size, base64_data);
+	return !strcmp(base64_data + strlen(base64_data) - strlen(reference), reference);
+}
+
+static bool is_key_matching(const uint8_t* privkey, const char* reference, bool devzat_mode) {
+	uint8_t pubkey[CURVE_25519_PUBLIC_KEY_SIZE];
+	ed25519_public_key(pubkey, privkey);
+	size_t formated_key_size = openssh_format_pubkey(NULL, pubkey);
+	uint8_t message[formated_key_size];
+	openssh_format_pubkey(message, pubkey);
+	if (devzat_mode) {
+		return is_key_hash_matching_for_devzat(message, formated_key_size, reference);
+	} else {
+		return is_public_key_matching(message, formated_key_size, reference);
+	}
 }
 
 // Generate a new random private key
@@ -106,6 +120,7 @@ typedef struct {
 	volatile bool finished;
 	volatile bool stop_force;
 	uint8_t working_privkey[CURVE_25519_PRIVATE_KEY_SIZE];
+	bool devzat_mode;
 } worker_arguments;
 
 // Generate a random starting private key, use it as a base to generate new
@@ -117,7 +132,7 @@ static void key_mining_worker(worker_arguments* args) {
 	random_privkey(privkey);
 	while((!args->stop_force) && (!args->finished)) {
 		increase_privkey(privkey);
-		if (is_key_hash_matching(privkey, args->reference)) {
+		if (is_key_matching(privkey, args->reference, args->devzat_mode)) {
 			args->finished = true;
 			memcpy(args->working_privkey, privkey, CURVE_25519_PRIVATE_KEY_SIZE);
 		}
@@ -158,8 +173,8 @@ static void seed_rng() {
 // Devzat hash the reference.
 // The data is malloced
 // This is not multi-threaded
-char* devzat_mining_mono(const char* reference) {
-	if (!valid_hex(reference)) {
+char* devzat_mining_mono(const char* reference, bool devzat_mode) {
+	if (!valid_hex(reference) && devzat_mode) {
 		fprintf(stderr, "Error, reference should be a valid hex number.\n");
 		return NULL;
 	}
@@ -169,6 +184,7 @@ char* devzat_mining_mono(const char* reference) {
 		.reference = reference,
 		.finished = false,
 		.stop_force = false,
+		devzat_mode = devzat_mode,
 	};
 	key_mining_worker(&args);
 
@@ -181,8 +197,8 @@ char* devzat_mining_mono(const char* reference) {
 #define ever ;;
 
 // Same as devzat_mining_mono but multithreaded
-char* devzat_mining_multi(const char* reference, unsigned int thread_number) {
-	if (!valid_hex(reference)) {
+char* devzat_mining_multi(const char* reference, unsigned int thread_number, bool devzat_mode) {
+	if (!valid_hex(reference) && devzat_mode) {
 		fprintf(stderr, "Error, reference should be a valid hex number.\n");
 		return NULL;
 	}
@@ -197,6 +213,7 @@ char* devzat_mining_multi(const char* reference, unsigned int thread_number) {
 		args_list[i]->reference = reference;
 		args_list[i]->finished = false;
 		args_list[i]->stop_force = false;
+		args_list[i]->devzat_mode = devzat_mode;
 
 		thrd_create(&threads[i], key_mining_worker_wrap, args_list[i]);
 	}

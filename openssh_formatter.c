@@ -127,14 +127,14 @@ static size_t write_openssh(uint8_t* s, const uint8_t* privkey, const uint8_t* p
 // for the given ed25519 keys
 char* openssh_format_key(const uint8_t* privkey, const uint8_t* pubkey) {
 	size_t bin_size = write_openssh(NULL, privkey, pubkey);
-	uint8_t bin_data[bin_size];
+	uint8_t* bin_data = malloc(bin_size);
 	write_openssh(bin_data, privkey, pubkey);
 #if 0
 	for (size_t i=0; i<bin_size; i++) {
 		putchar(bin_data[i]);
 	}
 #endif
-	char* base64_data = malloc(b64e_size(bin_size));
+	char* base64_data = malloc(b64e_size(bin_size) + 1);
 	b64_encode(bin_data, bin_size, (unsigned char*) base64_data);
 	char* ret = malloc(strlen(HEADER_MARK) + strlen(FOOTER_MARK) + strlen(base64_data) + 4);
 	strcpy(ret, HEADER_MARK);
@@ -145,6 +145,7 @@ char* openssh_format_key(const uint8_t* privkey, const uint8_t* pubkey) {
 	strcat(ret, "\n");
 
 	free(base64_data);
+	free(bin_data);
 	return ret;
 }
 
