@@ -79,8 +79,8 @@ static bool is_key_hash_matching_for_devzat(const uint8_t* message, size_t forma
 	return matching;
 }
 
-static bool is_public_key_matching(const char* message, size_t formated_key_size, const char* reference) {
-	unsigned char base64_data[b64e_size(formated_key_size)];
+static bool is_public_key_matching(const void* message, size_t formated_key_size, const char* reference) {
+	char base64_data[b64e_size(formated_key_size)];
 	b64_encode(message, formated_key_size, base64_data);
 	return !strcmp(base64_data + strlen(base64_data) - strlen(reference), reference);
 }
@@ -184,7 +184,7 @@ char* devzat_mining_mono(const char* reference, bool devzat_mode) {
 		.reference = reference,
 		.finished = false,
 		.stop_force = false,
-		devzat_mode = devzat_mode,
+		.devzat_mode = devzat_mode,
 	};
 	key_mining_worker(&args);
 

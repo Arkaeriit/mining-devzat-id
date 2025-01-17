@@ -53,7 +53,8 @@ unsigned int b64d_size(unsigned int in_size) {
 	return ((3*in_size)/4);
 }
 
-unsigned int b64_encode(const unsigned char* in, unsigned int in_len, unsigned char* out) {
+unsigned int b64_encode(const void* _in, unsigned int in_len, char* out) {
+	const unsigned char* in = _in;
 
 	unsigned int i=0, j=0, k=0, s[3];
 	
@@ -86,7 +87,8 @@ unsigned int b64_encode(const unsigned char* in, unsigned int in_len, unsigned c
 	return k;
 }
 
-unsigned int b64_decode(const unsigned char* in, unsigned int in_len, unsigned char* out) {
+unsigned int b64_decode(const char* in, unsigned int in_len, void* _out) {
+	char* out = _out;
 
 	unsigned int i=0, j=0, k=0, s[4];
 	

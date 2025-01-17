@@ -135,7 +135,7 @@ char* openssh_format_key(const uint8_t* privkey, const uint8_t* pubkey) {
 	}
 #endif
 	char* base64_data = malloc(b64e_size(bin_size) + 1);
-	b64_encode(bin_data, bin_size, (unsigned char*) base64_data);
+	b64_encode(bin_data, bin_size, base64_data);
 	char* ret = malloc(strlen(HEADER_MARK) + strlen(FOOTER_MARK) + strlen(base64_data) + 4);
 	strcpy(ret, HEADER_MARK);
 	strcat(ret, "\n");
